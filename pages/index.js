@@ -42,17 +42,24 @@ export default function Home() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || '서버 처리 중 오류가 발생했습니다.');
+        throw new Error(JSON.stringify(data));
       }
 
       if (data.error) {
-        throw new Error(data.error);
+        throw new Error(JSON.stringify(data.error));
       }
 
       setTableData(data.tableData);
     } catch (error) {
       console.error('Error processing image:', error);
-      setError(`이미지 처리 중 오류가 발생했습니다: ${error.message}`);
+      let errorMessage = '이미지 처리 중 오류가 발생했습니다: ';
+      try {
+        const errorData = JSON.parse(error.message);
+        errorMessage += errorData.error || errorData.details || error.message;
+      } catch {
+        errorMessage += error.message;
+      }
+      setError(errorMessage);
     } finally {
       setIsProcessing(false);
     }

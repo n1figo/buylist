@@ -39,6 +39,7 @@ import pytesseract
 from PIL import Image
 import sys
 import json
+import traceback
 
 try:
     image = Image.open('${imagePath}')
@@ -47,7 +48,12 @@ try:
     table_data = [line.split('\\t') for line in lines if line.strip()]
     print(json.dumps({"success": True, "data": table_data}))
 except Exception as e:
-    print(json.dumps({"success": False, "error": str(e)}))
+    error_info = {
+        "type": type(e).__name__,
+        "message": str(e),
+        "traceback": traceback.format_exc()
+    }
+    print(json.dumps({"success": False, "error": error_info}))
     `;
 
     // Save Python script to a temporary file
@@ -64,6 +70,7 @@ except Exception as e:
 
     const result = JSON.parse(stdout);
     if (!result.success) {
+      console.error('Python script error:', result.error);
       return res.status(500).json({ error: 'Image processing failed', details: result.error });
     }
 
