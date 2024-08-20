@@ -4,6 +4,7 @@ import formidable from 'formidable';
 import { promises as fs } from 'fs';
 import { exec } from 'child_process';
 import { promisify } from 'util';
+import path from 'path';
 
 const execPromise = promisify(exec);
 
@@ -31,7 +32,13 @@ export default async function handler(req, res) {
       throw new Error('No image file uploaded');
     }
 
-    const imagePath = files.image.filepath;
+    console.log('Received file:', files.image);
+    
+    const imagePath = files.image[0].filepath;
+    console.log('File path:', imagePath);
+    
+    const absoluteImagePath = path.resolve(imagePath);
+    console.log('Absolute file path:', absoluteImagePath);
     
     // Python script to process the image
     const pythonScript = `
@@ -42,7 +49,7 @@ import json
 import traceback
 
 try:
-    image = Image.open('${imagePath}')
+    image = Image.open(r'${absoluteImagePath.replace(/\\/g, '\\\\')}')
     text = pytesseract.image_to_string(image, lang='kor+eng')
     lines = text.split('\\n')
     table_data = [line.split('\\t') for line in lines if line.strip()]

@@ -7,7 +7,7 @@
         "start": "next start"
     },
     "dependencies": {
-        "formidable": "^3.5.0",
+        "formidable": "^2.0.0",
         "next": "latest",
         "react": "latest",
         "react-dom": "latest",

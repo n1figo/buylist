@@ -7,19 +7,16 @@ export default function Home() {
   const [tableData, setTableData] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState(null);
-  const pasteAreaRef = useRef(null);
+  const fileInputRef = useRef(null);
 
-  const handlePaste = async (e) => {
-    e.preventDefault();
+  const handleFileChange = (e) => {
     setError(null);
-    const items = e.clipboardData.items;
-    
-    for (let i = 0; i < items.length; i++) {
-      if (items[i].type.indexOf('image') !== -1) {
-        const blob = items[i].getAsFile();
-        setImage(blob);
-        break;
-      }
+    const file = e.target.files[0];
+    if (file && file.type.startsWith('image/')) {
+      setImage(file);
+    } else {
+      setError('Please select a valid image file.');
+      setImage(null);
     }
   };
 
@@ -68,28 +65,24 @@ export default function Home() {
   return (
     <div style={{ padding: '2rem', maxWidth: '800px', margin: '0 auto' }}>
       <h1>Excel to Web Table Converter</h1>
-      <div
-        ref={pasteAreaRef}
-        onPaste={handlePaste}
-        style={{ 
-          border: '2px dashed #ccc', 
-          padding: '20px', 
-          marginBottom: '20px',
-          minHeight: '100px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          cursor: 'pointer'
-        }}
-        tabIndex="0"
-        onClick={() => pasteAreaRef.current.focus()}
-      >
-        {image ? (
-          <img src={URL.createObjectURL(image)} alt="Pasted content" style={{ maxWidth: '100%', maxHeight: '300px' }} />
-        ) : (
-          <p>Ctrl+V로 이미지를 여기에 붙여넣으세요</p>
-        )}
+      <div style={{ marginBottom: '20px' }}>
+        <input
+          type="file"
+          accept="image/*"
+          onChange={handleFileChange}
+          ref={fileInputRef}
+          style={{ display: 'none' }}
+        />
+        <button onClick={() => fileInputRef.current.click()}>
+          이미지 파일 선택
+        </button>
+        {image && <span style={{ marginLeft: '10px' }}>{image.name}</span>}
       </div>
+      {image && (
+        <div style={{ marginBottom: '20px' }}>
+          <img src={URL.createObjectURL(image)} alt="Selected image" style={{ maxWidth: '100%', maxHeight: '300px' }} />
+        </div>
+      )}
       <button 
         onClick={processImage} 
         disabled={!image || isProcessing} 
