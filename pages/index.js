@@ -1,4 +1,4 @@
-// File: pages/index.js (Client-side code)
+// File: pages/index.js
 
 import { useState, useRef } from 'react';
 
@@ -101,9 +101,7 @@ export default function Home() {
             {tableData.slice(1).map((row, rowIndex) => (
               <tr key={rowIndex}>
                 {row.map((cell, cellIndex) => (
-                  <td key={cellIndex} style={{ border: '1px solid #ddd', padding: '8px', textAlign: '
-
-left' }}>{cell}</td>
+                  <td key={cellIndex} style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'left' }}>{cell}</td>
                 ))}
               </tr>
             ))}
@@ -112,74 +110,4 @@ left' }}>{cell}</td>
       )}
     </div>
   );
-}
-
-// File: pages/api/process-image.js (Server-side code)
-
-import { IncomingForm } from 'formidable';
-import { promises as fs } from 'fs';
-import { exec } from 'child_process';
-import { promisify } from 'util';
-
-const execPromise = promisify(exec);
-
-export const config = {
-  api: {
-    bodyParser: false,
-  },
-};
-
-export default async function handler(req, res) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method Not Allowed' });
-  }
-
-  try {
-    const form = new IncomingForm();
-    const [fields, files] = await new Promise((resolve, reject) => {
-      form.parse(req, (err, fields, files) => {
-        if (err) return reject(err);
-        resolve([fields, files]);
-      });
-    });
-
-    const imagePath = files.image[0].filepath;
-    
-    // Python script to process the image
-    const pythonScript = `
-import pytesseract
-from PIL import Image
-import sys
-import json
-
-image = Image.open('${imagePath}')
-text = pytesseract.image_to_string(image)
-lines = text.split('\\n')
-table_data = [line.split('\\t') for line in lines if line.strip()]
-print(json.dumps(table_data))
-    `;
-
-    // Save Python script to a temporary file
-    const scriptPath = '/tmp/process_image.py';
-    await fs.writeFile(scriptPath, pythonScript);
-
-    // Execute Python script
-    const { stdout, stderr } = await execPromise(`python ${scriptPath}`);
-
-    if (stderr) {
-      console.error('Python script error:', stderr);
-      return res.status(500).json({ error: 'Image processing failed' });
-    }
-
-    const tableData = JSON.parse(stdout);
-
-    // Clean up temporary files
-    await fs.unlink(imagePath);
-    await fs.unlink(scriptPath);
-
-    return res.status(200).json({ tableData });
-  } catch (error) {
-    console.error('Server error:', error);
-    return res.status(500).json({ error: 'Internal Server Error' });
-  }
 }
