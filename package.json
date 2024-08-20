@@ -10,6 +10,7 @@
       "next": "latest",
       "react": "latest",
       "react-dom": "latest",
-      "tesseract.js": "^4.0.0"
+      "tesseract.js": "^4.0.0",
+      "formidable": "^3.5.0"
     }
   }
