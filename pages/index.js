@@ -39,15 +39,20 @@ export default function Home() {
         body: formData,
       });
 
+      const data = await response.json();
+
       if (!response.ok) {
-        throw new Error('서버 처리 중 오류가 발생했습니다.');
+        throw new Error(data.error || '서버 처리 중 오류가 발생했습니다.');
       }
 
-      const data = await response.json();
+      if (data.error) {
+        throw new Error(data.error);
+      }
+
       setTableData(data.tableData);
     } catch (error) {
       console.error('Error processing image:', error);
-      setError('이미지 처리 중 오류가 발생했습니다. 다시 시도해 주세요.');
+      setError(`이미지 처리 중 오류가 발생했습니다: ${error.message}`);
     } finally {
       setIsProcessing(false);
     }
