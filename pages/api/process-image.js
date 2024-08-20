@@ -1,6 +1,6 @@
 // File: pages/api/process-image.js
 
-import { IncomingForm } from 'formidable';
+import formidable from 'formidable';
 import { promises as fs } from 'fs';
 import { exec } from 'child_process';
 import { promisify } from 'util';
@@ -19,7 +19,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const form = new IncomingForm();
+    const form = formidable();
     const [fields, files] = await new Promise((resolve, reject) => {
       form.parse(req, (err, fields, files) => {
         if (err) return reject(err);
@@ -27,11 +27,11 @@ export default async function handler(req, res) {
       });
     });
 
-    if (!files.image || !files.image[0]) {
+    if (!files.image) {
       throw new Error('No image file uploaded');
     }
 
-    const imagePath = files.image[0].filepath;
+    const imagePath = files.image.filepath;
     
     // Python script to process the image
     const pythonScript = `
