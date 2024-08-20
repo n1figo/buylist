@@ -43,16 +43,43 @@ export default async function handler(req, res) {
     // Python script to process the image
     const pythonScript = `
 import pytesseract
-from PIL import Image
+from PIL import Image, ImageEnhance, ImageFilter
 import sys
 import json
 import traceback
 
+def preprocess_image(image_path):
+    # Open the image
+    img = Image.open(image_path)
+    
+    # Convert to grayscale
+    img = img.convert('L')
+    
+    # Increase contrast
+    enhancer = ImageEnhance.Contrast(img)
+    img = enhancer.enhance(2)
+    
+    # Increase sharpness
+    enhancer = ImageEnhance.Sharpness(img)
+    img = enhancer.enhance(2)
+    
+    # Apply a slight blur to reduce noise
+    img = img.filter(ImageFilter.GaussianBlur(radius=0.5))
+    
+    return img
+
 try:
-    image = Image.open(r'${absoluteImagePath.replace(/\\/g, '\\\\')}')
-    text = pytesseract.image_to_string(image, lang='kor+eng')
-    lines = text.split('\\n')
-    table_data = [line.split('\\t') for line in lines if line.strip()]
+    # Preprocess the image
+    preprocessed_image = preprocess_image(r'${absoluteImagePath.replace(/\\/g, '\\\\')}')
+    
+    # Perform OCR with custom configuration
+    custom_config = r'--oem 3 --psm 6 -c preserve_interword_spaces=1 -l kor+eng'
+    text = pytesseract.image_to_string(preprocessed_image, config=custom_config)
+    
+    # Split the text into lines and then into cells
+    lines = text.strip().split('\\n')
+    table_data = [line.split() for line in lines]
+    
     print(json.dumps({"success": True, "data": table_data}))
 except Exception as e:
     error_info = {
